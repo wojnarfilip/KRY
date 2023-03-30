@@ -3,7 +3,12 @@ from tinyec import registry
 import socket
 import secrets
 
-def compress(pubKey):
+
+def compressStr(pubKey):
+    return str(pubKey.x) + "," + str(pubKey.y)
+
+
+def toHex(pubKey):
     return hex(pubKey.x) + hex(pubKey.y % 2)[2:]
 
 
@@ -11,36 +16,37 @@ curve = registry.get_curve('secp256r1')
 
 alicePrivKey = secrets.randbelow(curve.field.n)
 alicePubKey = alicePrivKey * curve.g
-print(curve.g)
-print(alicePubKey)
 
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect(("localhost", 9998))
+clientSender = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+clientSender.connect(("localhost", 9998))
 
-client.send(str(alicePubKey).encode())
+clientSender.send(str(compressStr(alicePubKey)).encode())
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(("localhost", 9999))
 server.listen()
 
-client, addr = server.accept()
-bobPubKey = client.recv(1024).decode()
-print(bobPubKey)
-alicePubKey = Point(bobPubKey)
+clientReceiver, addr = server.accept()
+bobPubKey = clientReceiver.recv(1024).decode()
+
+bobPubKey = bobPubKey.split(",")
+y = int(bobPubKey.pop())
+x = int(bobPubKey.pop())
+bobPubKey = Point(curve, x, y)
 
 aliceSharedKey = alicePrivKey * bobPubKey
-client.send(str(compress(aliceSharedKey).encode()))
+clientSender.send(str(aliceSharedKey).encode())
 
-bobSharedKey = client.recv(1024)
+bobSharedKey = clientReceiver.recv(1024).decode()
 
-if(bobSharedKey == aliceSharedKey):
-    print("Alice shared key:", compress(aliceSharedKey))
-    print("Bob shared key:", compress(bobSharedKey))
+if(str(bobSharedKey) == str(aliceSharedKey)):
+    print("Alice shared key:", aliceSharedKey)
+    print("Bob shared key:", bobSharedKey)
     print("Successful ECDH")
 else:
-    print("Alice shared key:", compress(aliceSharedKey))
-    print("Bob shared key:", compress(bobSharedKey))
+    print("Alice shared key:", aliceSharedKey)
+    print("Bob shared key:", bobSharedKey)
     print("Keys are not equal")
 
-client.close()
+clientSender.close()
 server.close()
