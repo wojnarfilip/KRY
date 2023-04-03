@@ -1,0 +1,4 @@
+pip install eciespy
+pip install tinyec
+pip install pycryptodome
+pip install ecdsa
