@@ -2,6 +2,8 @@ import tinyec.ec
 from tinyec import registry
 import secrets
 
+### Used only for debugging and demonstration purposes
+
 def compress(pubKey):
     return hex(pubKey.x) + "," + hex(pubKey.y)
 
