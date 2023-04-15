@@ -1,3 +1,8 @@
+import base64
+
+from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from tinyec.ec import Point
 from tinyec import registry
 import socket
@@ -15,6 +20,39 @@ def compressStr(pubKey):
 
 # Generate alice's keypair for ECDSA signing
 OurECDSA.generate_ECDSA_keys("Alice-ECDSA-private", "Alice-ECDSA-public")
+
+# Define the password
+key_password = b"alice password"
+
+# Derive a key from the password
+kdf = PBKDF2HMAC(
+    algorithm=hashes.SHA256(),
+    length=32,
+    salt=b"alice salt",
+    iterations=100000,
+)
+key = kdf.derive(key_password)
+key = base64.urlsafe_b64encode(key)
+
+# Encrypt the private key file using the key derived from password
+with open('Alice-ECDSA-private', 'rb') as file:
+    non_encrypted_key = file.read()
+
+# Encrypt the private key with fernet and rewrite the original non encrypted one
+fernet = Fernet(key)
+encrypted_key = fernet.encrypt(non_encrypted_key)
+with open('Alice-ECDSA-private', 'wb') as encrypted_file:
+    encrypted_file.write(encrypted_key)
+
+# Decrypt the private key file using the key
+fernet = Fernet(key)
+with open('Alice-ECDSA-private', 'rb') as encrypted_file:
+    encrypted = encrypted_file.read()
+decrypted = fernet.decrypt(encrypted).decode()
+print(decrypted)
+
+# Message to be sent over network
+plain_message = b"Does it work?"
 
 # Choose secp256r1 curve
 curve = registry.get_curve('secp256r1')

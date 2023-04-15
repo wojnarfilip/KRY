@@ -1,4 +1,8 @@
+import base64
 import tinyec
+from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from tinyec import registry
 import socket
 import src.EllipticCurves.ECIES as OurECIES
@@ -15,10 +19,41 @@ def compressStr(pubKey):
 # Generate bob's keypair for ECDSA signing
 OurECDSA.generate_ECDSA_keys("Bob-ECDSA-private", "Bob-ECDSA-public")
 
+# Define the password
+key_password = b"bob password"
+
+# Derive a key from the password
+kdf = PBKDF2HMAC(
+    algorithm=hashes.SHA256(),
+    length=32,
+    salt=b"bobsalt",
+    iterations=100000,
+)
+key = kdf.derive(key_password)
+key = base64.urlsafe_b64encode(key)
+
+# Encrypt the private key file using the key derived from password
+with open('Bob-ECDSA-private', 'rb') as file:
+    non_encrypted_key = file.read()
+
+# Encrypt the private key with fernet and rewrite the original non encrypted one
+fernet = Fernet(key)
+encrypted_key = fernet.encrypt(non_encrypted_key)
+with open('Bob-ECDSA-private', 'wb') as encrypted_file:
+    encrypted_file.write(encrypted_key)
+
+# Decrypt the private key file using the key
+fernet = Fernet(key)
+with open('Bob-ECDSA-private', 'rb') as encrypted_file:
+    encrypted = encrypted_file.read()
+decrypted = fernet.decrypt(encrypted).decode()
+print(decrypted)
+
+# Message to be sent over network
 plain_message = b"Does it work?"
 
 # Create message signature
-signature = OurECDSA.sign_message(plain_message, "Bob-ECDSA-private")
+signature = OurECDSA.sign_message(plain_message, decrypted)
 if not OurECDSA.verify_message(plain_message, signature, "Bob-ECDSA-public"):
     print("Something went wrong with ECDSA signing")
 
