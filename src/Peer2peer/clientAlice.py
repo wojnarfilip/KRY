@@ -10,6 +10,44 @@ import src.EllipticCurves.ECIES as OurECIES
 import src.EllipticCurves.ECDSA as OurECDSA
 import secrets
 import pickle
+import os
+
+
+def process_messages(file_name, private_key):
+    if not os.path.exists(file_name):
+        print("No messages to process.")
+        return []
+
+    decrypted_messages = []
+    with open(file_name, 'rb') as file:
+        while True:
+            try:
+                encrypted_msg_obj = pickle.load(file)
+                unpickled_msg_obj = pickle.loads(encrypted_msg_obj)
+
+                pickled_decrypted_msg = OurECIES.decrypt(dict(unpickled_msg_obj).values(), private_key)
+
+                unpickled_decrypted_msg = pickle.loads(pickled_decrypted_msg)
+
+                plain_message, signature = dict(unpickled_decrypted_msg).values()
+                if not OurECDSA.verify_message(plain_message, signature, "Bob-ECDSA-public"):
+                    print("Wrong file signature")
+
+                decrypted_messages.append(plain_message)
+
+            except EOFError:
+                break
+
+    return decrypted_messages
+
+
+# save location of file from hold off communication
+counter = 0
+while True:
+    messages_file = f"hold-off_{counter}.txt"
+    if not os.path.exists(messages_file):
+        break
+    counter += 1
 
 
 # Main script for client Alice
@@ -98,22 +136,37 @@ else:
     print("Bob shared key:", bobSharedKey)
     print("Keys are not equal")
 
-# Receive encrypted message from bob
-encrypted_msg_obj = clientReceiver.recv(1024)
-unpickled_msg_obj = pickle.loads(encrypted_msg_obj)
+# # Receive encrypted message from bob
+# encrypted_msg_obj = clientReceiver.recv(1024)
+# unpickled_msg_obj = pickle.loads(encrypted_msg_obj)
+#
+# # Decrypt the message with alice private key
+# pickled_decrypted_msg = OurECIES.decrypt(dict(unpickled_msg_obj).values(), alicePrivKey)
+#
+# unpickled_decrypted_msg = pickle.loads(pickled_decrypted_msg)
+#
+# # Verify message was signed by bob
+# plain_message, signature = dict(unpickled_decrypted_msg).values()
+# if not OurECDSA.verify_message(plain_message, signature, "Bob-ECDSA-public"):
+#     print("Wrong file signature")
+#
+# print(plain_message)
+# print(signature)
 
-# Decrypt the message with alice private key
-pickled_decrypted_msg = OurECIES.decrypt(dict(unpickled_msg_obj).values(), alicePrivKey)
+# Receive encrypted message from bob and store it in the file
+with open(messages_file, 'ab') as file:
+    encrypted_msg_obj = clientReceiver.recv(1024)
+    pickle.dump(encrypted_msg_obj, file)
 
-unpickled_decrypted_msg = pickle.loads(pickled_decrypted_msg)
+# Decrypt the private key file using the key
+fernet = Fernet(key)
+with open('Alice-ECDSA-private', 'rb') as encrypted_file:
+    encrypted = encrypted_file.read()
+decrypted = fernet.decrypt(encrypted).decode()
 
-# Verify message was signed by bob
-plain_message, signature = dict(unpickled_decrypted_msg).values()
-if not OurECDSA.verify_message(plain_message, signature, "Bob-ECDSA-public"):
-    print("Wrong file signature")
-
-print(plain_message)
-print(signature)
+# Open decrypted received message
+decrypted_messages = process_messages(messages_file, alicePrivKey)
+print(decrypted_messages)
 
 # Close all connections
 clientReceiver.close()
