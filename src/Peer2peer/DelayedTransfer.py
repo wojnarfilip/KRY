@@ -1,13 +1,12 @@
 from cryptography.fernet import Fernet
 
-from clientAlice import alicePrivKey, key
+from src.Peer2peer.clientAlice import alicePrivKey, key
+from src.Peer2peer.clientAlice import process_messages
 
-from clientAlice import process_messages
-messages_file = "hold-off_0.txt"
-
+messages_file = f"hold-off_0.txt"
 # Decrypt the private key file using the key
 fernet = Fernet(key)
-with open('Alice-ECDSA-private', 'rb') as encrypted_file:
+with open('CryptoKeys/Alice-ECDSA-private', 'rb') as encrypted_file:
     encrypted = encrypted_file.read()
 decrypted_key = fernet.decrypt(encrypted)
 
