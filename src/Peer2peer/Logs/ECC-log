@@ -1,0 +1,39 @@
+[2023-04-19 16:42:55] Start of the application for ECC file sharing 
+[2023-04-19 16:42:55] Key pair for Bob already exists | Algorithm used: SECP256k1 
+[2023-04-19 16:42:55] Decrypting Bob's ECDSA private key with password derived key | Algorithm used: PBKDF2HMAC 
+[2023-04-19 16:42:55] Message before encrypting: b'Very secret something incredibly secret' | File size: 72B
+[2023-04-19 16:42:55] Generating Bob's temporary key pair for ECDH + ECIES purposes | Algorithm used: SECP256k1 
+[2023-04-19 16:42:55] Alice is unavailable ! wait for 5 seconds then try again. 
+[2023-04-19 16:43:00] Bob temporarily encrypting the file with password derived key until Alice becomes available | Algorithm used: PBKDF2HMAC 
+[2023-04-19 16:43:00] Alice is unavailable ! wait for 5 seconds then try again. 
+[2023-04-19 16:43:05] Alice is unavailable ! wait for 5 seconds then try again. 
+[2023-04-19 16:43:10] Alice is unavailable ! wait for 5 seconds then try again. 
+[2023-04-19 16:43:13] Key pair for Alice already exists | Algorithm used: SECP256k1 
+[2023-04-19 16:43:15] Bob established connection with Alice 
+[2023-04-19 16:43:15] Bob decrypting temporarily encrypted message with password derived key as Alice became available | Algorithm used: PBKDF2HMAC 
+[2023-04-19 16:43:15] Message after temporarily encrypting: b'gAAAAABkP_30ZCcm-aRKKgWOfjAWqV-eeXprbxclsZfuQjdI31Wp-wK5C3jyWijtgrEu1q0YwCImyM4uuXITtL9vxlc92xs5Tnn_bPgsBZT0RcmlK2Ax_WESckx062B6ch5g9asDDG3q' | File size: 173B
+[2023-04-19 16:43:15] Signing file with Bob's ECDSA private key | Algorithm used: SECP256k1 
+[2023-04-19 16:43:15] Creating object with message + signature to be sent over network | File size: 232B
+[2023-04-19 16:43:15] Sending Bob's public key to Alice for ECDH | File size: 188B | Algorithm used: SECP256k1
+[2023-04-19 16:43:15] Alice receiving Bob's public key for ECDH | File size: 204B | Algorithm used: SECP256k1
+[2023-04-19 16:43:15] Sending Alice's public key to Bob for ECDH | File size: 188B | Algorithm used: SECP256k1
+[2023-04-19 16:43:15] Bob receiving Alice's public key for ECDH | File size: 204B | Algorithm used: SECP256k1
+[2023-04-19 16:43:15] Alice calculating the shared ECDH key | Algorithm used: SECP256k1 
+[2023-04-19 16:43:15] Bob calculating the shared ECDH key | Algorithm used: SECP256k1 
+[2023-04-19 16:43:15] Bob receiving Alice's shared ECDH key | Algorithm used: SECP256k1 
+[2023-04-19 16:43:15] Alice receiving bob's shared ECDH key | Algorithm used: SECP256k1 
+[2023-04-19 16:43:15] Bob verifying alice has same shared key | Algorithm used: SECP256k1 
+[2023-04-19 16:43:15] Alice verifying bob has same shared key | Algorithm used: SECP256k1 
+[2023-04-19 16:43:15] Keys acquired from ECDH are same... continuing... 
+[2023-04-19 16:43:15] Encrypting message with ECIES(sharedKey + Alice's public key) | Algorithm used: AES-GCM and SECP256k1 
+[2023-04-19 16:43:15] Bob sending encrypted message to Alice | File size: 232B
+[2023-04-19 16:43:15] Alice receiving encrypted message from bob | File size: 232B
+[2023-04-19 16:43:15] Message before decrypting: {'ciphertext': b'\xfb\xccK\xf3B1MJ\xb9\x0c\xf25\xae\xfdY\xce\xbdnK\x10\xea\xb7\xfbn_\x18\x16cU<\x14\\\xe3\xc7,\xba\xf0\xfd\x16o\xa9\x84\x16P\xa20\xab\xdb\x96\x08\x02l\xfe\xea\t\xa1$\xf0\x8c\x8eY\xa5?\xeeI\xba\x1fKp|\xbd\x0fqY=\x1f\x9e\x13\xb7\xd9r~OC\xfer*D\xef\xc1?\x9cPr\x12Y!B\xa3\r4\x01\x9c\xc2\x06Q\xbe,\xe5\xa5\xd1i\x8fm&\xe97e\xc3>\xb6Tk_GQ\x18\xe9Fk>\x84\xf3\xf7\xfe_z\x04\xe7\xb29\x8c\x807\xf8\xf75\xba', 'nonce': b'\xc6\xa5\x88T\xc2\x96C\x18h{\x8f\xe0/)o\x08', 'authTag': b'r\xff&\x109\xd8\x8a\xb2\x12F\x9a\xa6\rP\xbaA', 'ciphertextPubKey': '40962599418476346677493633994964919573185904607844532297318708736499127964056,28955068924595708264606032540922264101046882578523486332661916776170711494531'} | File size: 232B
+[2023-04-19 16:43:15] Alice decrypting the message from bob with her private key | Algorithm used: AES-GCM and SECP256k1 
+[2023-04-19 16:43:15] Message after decrypting: b'Very secret something incredibly secret' | File size: 72B
+[2023-04-19 16:43:15] Alice verifying the message is from Bob based on signature and Bob's public ECDSA key | Algorithm used: SECP256k1 
+[2023-04-19 16:43:15] The signature is valid... message is from Bob | Algorithm used: SECP256k1 
+[2023-04-19 16:43:15] Alice sending confirmation to Bob that she received a file 
+[2023-04-19 16:43:15] Alice closes connection 
+[2023-04-19 16:43:15] Bob receiving confirmation Alice has received a file 
+[2023-04-19 16:43:15] Bob closing connection 
