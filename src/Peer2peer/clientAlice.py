@@ -1,5 +1,6 @@
 import base64
 import sys
+import datetime
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
@@ -58,11 +59,11 @@ def compressStr(pubKey):
     return str(pubKey.x) + "," + str(pubKey.y)
 
 
-
-
 # Define the password, log filename
 key_password = b"alice password"
 log_file = "ECC-log"
+ip_address_alice = "localhost"
+ip_address_bob = "localhost"
 
 # Derive a key from the password
 kdf = PBKDF2HMAC(
@@ -79,7 +80,8 @@ fernet = Fernet(key)
 # plain_message = b'does it work?'
 
 # Generate alice's keypair for ECDSA signing
-if not os.path.exists('CryptoKeys/Alice-ECDSA-private') and not os.path.exists('CryptoKeys/Alice-ECDSA-public'):
+if not os.path.exists('CryptoKeys/Alice-ECDSA-private') and not os.path.exists(
+        'CryptoKeys/Alice-ECDSA-public'):
     LogUtils.log_algorithm(log_file, "Creating ECDSA key pair for Alice", "SECP256k1")
     OurECDSA.generate_ECDSA_keys("Alice-ECDSA-private", "Alice-ECDSA-public")
 
@@ -106,12 +108,17 @@ print(decrypted)
 curve = registry.get_curve('secp256r1')
 
 # Generate keypair for ECDH and ECIES
+LogUtils.log_algorithm(log_file, "Generating Alice's temporary key pair for ECDH + ECIES purposes", "SECP256k1")
 alicePrivKey = secrets.randbelow(curve.field.n)
 alicePubKey = alicePrivKey * curve.g
 
+now = datetime.datetime.now()
+current_time = now.strftime("%Y-%m-%d %H:%M:%S")
+print(f'[{current_time}] Waiting for data from the sender \n');
+
 # Start listening for tcp connections on localhost:9999 link for receiving from bob
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind(("localhost", 9999))
+server.bind((ip_address_alice, 9999))
 server.listen(5)
 
 # Accept bob's public key
@@ -121,7 +128,8 @@ LogUtils.log_all(log_file, "Alice receiving Bob's public key for ECDH", sys.gets
 
 # Open tcp connection to localhost:9998 link for sending data to bob
 clientSender = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-clientSender.connect(("localhost", 9998))
+clientSender.connect((ip_address_bob, 9998))
+LogUtils.log_connection(log_file, "Alice", "Bob", ip_address_alice, ip_address_bob, "9998")
 
 # Send public key to bob for ECDH and ECIES purposes
 clientSender.send(str(compressStr(alicePubKey)).encode())

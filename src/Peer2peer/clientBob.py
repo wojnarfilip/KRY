@@ -1,13 +1,15 @@
+import argparse
 import base64
 import os
 import sys
 import time
+from os import path
 
-import tinyec
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from tinyec import registry
+import tinyec
 import socket
 import src.EllipticCurves.ECIES as OurECIES
 import src.EllipticCurves.ECDSA as OurECDSA
@@ -15,16 +17,33 @@ import src.Logger.LogUtils as LogUtils
 import secrets
 import pickle
 
+
+
 # Main script for client Bob
+sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+print(sys.executable)
+print(os.getcwd())
+print(sys.path)
 
 def compressStr(pubKey):
     return str(pubKey.x) + "," + str(pubKey.y)
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument("-wait_time", type=int, default=60,
+                    help="Time in seconds to wait for Alice's server to become available")
+parser.add_argument("-file", type=str, default="ResourceFiles/LikeReallySecretStuff",
+                    help="File to be sent over network")
+
+args = parser.parse_args()
+
 # Define the password, log filename, max wait time in delayed transfer etc...
 key_password = b"bob password"
 log_file = "ECC-log"
-wait_time = 60
+wait_time = args.wait_time
+file_to_sent = args.file
+ip_address_alice = "localhost"
+ip_address_bob = "localhost"
 
 LogUtils.create_file(log_file)
 
@@ -41,7 +60,8 @@ key = base64.urlsafe_b64encode(key)
 fernet = Fernet(key)
 
 # Generate bob's keypair for ECDSA signing
-if not os.path.exists('CryptoKeys/Bob-ECDSA-private') and not os.path.exists('CryptoKeys/Bob-ECDSA-public'):
+if not os.path.exists('CryptoKeys/Bob-ECDSA-private') and not os.path.exists(
+        'CryptoKeys/Bob-ECDSA-public'):
     LogUtils.log_algorithm(log_file, "Creating ECDSA key pair for Bob", "SECP256k1")
     OurECDSA.generate_ECDSA_keys("Bob-ECDSA-private", "Bob-ECDSA-public")
 
@@ -66,7 +86,7 @@ decrypted = fernet.decrypt(encrypted).decode()
 print(decrypted)
 
 # Message to be sent over network
-with open('ResourceFiles/LikeReallySecretStuff', 'rb') as f:
+with open(file_to_sent, 'rb') as f:
     plain_message = f.read()
     LogUtils.log_displayed_text(log_file, "Message before encrypting", plain_message, sys.getsizeof(plain_message))
 
@@ -85,8 +105,9 @@ connection_establisted = False
 file_secured = False
 while(wait_time > 0):
     try:
-        clientSender.connect(("localhost", 9999))
+        clientSender.connect((ip_address_alice, 9999))
         connection_establisted = True
+        LogUtils.log_connection(log_file, "Bob", "Alice", ip_address_bob, ip_address_alice, "(9999)")
         LogUtils.log_message(log_file, "Bob established connection with Alice")
         break;
     except ConnectionRefusedError:
@@ -96,6 +117,7 @@ while(wait_time > 0):
         if not file_secured:
             LogUtils.log_algorithm(log_file, "Bob temporarily encrypting the file with password derived key until Alice becomes available", "PBKDF2HMAC")
             encrypted_signed_msg_obj = fernet.encrypt(plain_message)
+            LogUtils.log_displayed_text(log_file, "Message after temporarily encrypting", encrypted_signed_msg_obj, sys.getsizeof(encrypted_signed_msg_obj))
             with open("ResourceFiles/temporarily-secured-file", 'wb') as file:
                 file.write(encrypted_signed_msg_obj)
             file_secured = True
@@ -109,7 +131,6 @@ if connection_establisted and file_secured:
     with open('ResourceFiles/temporarily-secured-file', 'rb') as temporarily_encrypted_message:
         LogUtils.log_algorithm(log_file, "Bob decrypting temporarily encrypted message with password derived key as Alice became available", "PBKDF2HMAC")
         tmp = temporarily_encrypted_message.read()
-        LogUtils.log_displayed_text(log_file, "Message after temporarily encrypting", tmp, sys.getsizeof(tmp))
         plain_message = fernet.decrypt(tmp)
 
 # Create message signature
@@ -134,7 +155,7 @@ clientSender.send(str(compressStr(bobPubKey)).encode())
 
 # Listen for tcp connection from alice on endpoint localhost:9998
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind(("localhost", 9998))
+server.bind((ip_address_bob, 9998))
 server.listen(5)
 
 # Receive alice's public key
