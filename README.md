@@ -9,6 +9,8 @@ The whole communication is build on python sockets and secured with ECC system. 
 There are also implemented features to keep the files secure on local storage, e.g. encrypting the EC private key for ECDSA with key derived from password and similarly encrypting the file intended 
 to be sent if the receiver is currently unavailable.
 
+Client doesn't have to worry about key pair generation as the application will create those for client if they don't exist yet. If the keys are already present the application will use already existing keys. Keys are located in ``src/Peer2peer/CryptoKeys`` folder
+
 The application in this state is intended to be run on localhost however it should be possible to modify it to work on different networks simply by changing values from localhost to desired IPs on these lines
 1. clientBob: https://github.com/wojnarfilip/KRY/blob/main/src/Peer2peer/clientBob.py#L45-L46
 2. clientAlice: https://github.com/wojnarfilip/KRY/blob/main/src/Peer2peer/clientAlice.py#L65-L66
